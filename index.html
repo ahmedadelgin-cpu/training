@@ -139,6 +139,7 @@
       background: rgba(245, 158, 11, 0.08) !important;
       border-radius: 4px;
       cursor: text !important;
+      padding: 1px 4px;
     }
 
     @media (max-width: 800px) { .metrics { grid-template-columns: repeat(2, 1fr); max-width: 100%; } .macro-box { grid-template-columns: 1fr; } .grid { grid-template-columns: 1fr; } }
@@ -171,11 +172,11 @@
         </div>
       </div>
       <div class="nav">
-        <button class="nav-btn active" id="tabWorkouts" onclick="switchTab('workouts')">🏋️♂️ التمارين</button>
+        <button class="nav-btn active" id="tabWorkouts" onclick="switchTab('workouts')">🏋️‍♂️ التمارين</button>
         <button class="nav-btn diet" id="tabDiet" onclick="switchTab('diet')">🥗 التغذية</button>
       </div>
       <div class="ctrls">
-        <!-- أزرار التعديل والـ PDF الجديدة -->
+        <!-- أزرار التعديل والـ PDF -->
         <button class="btn-action" id="btnEditToggle" onclick="toggleEditMode()" title="تعديل نصوص الصفحة">
           ✏️ <span id="btnEditText">تعديل الخطة</span>
         </button>
@@ -262,12 +263,13 @@
           <p style="font-size:11.5px;color:var(--muted)">الهدف: 3.5 لتر يومياً (كل كوب يعادل ~400 مل)</p>
         </div>
 
+        <!-- بطاقة المكملات اليومية (قابلة للتعديل والحفظ بالكامل) -->
         <div class="box-card">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
             <div class="msh-icon-box" style="width:32px;height:32px;border-radius:8px;background:#7c3aed;box-shadow:0 3px 8px rgba(124,58,237,0.3);font-size:17px">💊</div>
-            <h4 style="font-size:14px">المكملات اليومية الأساسية</h4>
+            <h4 style="font-size:14px" id="supplementsTitle">المكملات اليومية الأساسية</h4>
           </div>
-          <ul style="list-style:none;font-size:12.5px;color:var(--txt)">
+          <ul id="supplementsList" style="list-style:none;font-size:12.5px;color:var(--txt)">
             <li style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between"><span>واي بروتين (بعد التمرين)</span><strong>1 سكوب</strong></li>
             <li style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between"><span>كرياتين مونوهيدرات</span><strong>5 جم يومياً</strong></li>
             <li style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between"><span>أوميجا 3 (مع الغداء)</span><strong>1000 ملجم</strong></li>
@@ -492,9 +494,9 @@
       const btn = document.getElementById('btnEditToggle');
       const txt = document.getElementById('btnEditText');
 
-      // جعل جميع النصوص والبيانات قابلة للتعديل عند تفعيل الوضع
+      // جعل جميع النصوص والبيانات قابلة للتعديل عند تفعيل الوضع (بما فيها المكملات اليومية)
       const editableElements = document.querySelectorAll(
-        '#coachAndUserText, #heroUserTitle, #heroSystemDesc, .m-pill div, .specs div, h4, p, .meal-ul li, .m-val, #coachTip'
+        '#coachAndUserText, #heroUserTitle, #heroSystemDesc, .m-pill div, .specs div, h4, p, .meal-ul li, .m-val, #coachTip, #supplementsList span, #supplementsList strong'
       );
 
       editableElements.forEach(el => {
@@ -504,7 +506,7 @@
       if (isEditing) {
         btn.classList.add('editing');
         txt.textContent = '💾 حفظ التعديلات';
-        showToast('تم تفعيل وضع التعديل! يمكنك الآن الضغط على أي نص وكتابة تعديلاتك');
+        showToast('تم تفعيل وضع التعديل! يمكنك الآن الضغط على أي مكمل أو كمية وتعديلها مباشرة');
       } else {
         btn.classList.remove('editing');
         txt.textContent = '✏️ تعديل الخطة';
@@ -518,7 +520,9 @@
       const edits = {
         coachAndUser: document.getElementById('coachAndUserText').innerHTML,
         heroTitle: document.getElementById('heroUserTitle').innerHTML,
-        heroDesc: document.getElementById('heroSystemDesc').innerHTML
+        heroDesc: document.getElementById('heroSystemDesc').innerHTML,
+        supplements: document.getElementById('supplementsList').innerHTML,
+        supplementsTitle: document.getElementById('supplementsTitle') ? document.getElementById('supplementsTitle').innerHTML : null
       };
       localStorage.setItem('custom_user_edits', JSON.stringify(edits));
     }
@@ -541,7 +545,6 @@
       html2pdf().set(opt).from(element).save().then(() => {
         showToast('تم تحميل ملف PDF بنجاح! 🎉');
       }).catch(() => {
-        // بديل قياسي في حال تعذر المكتبة الخارجية
         window.print();
       });
     }
@@ -660,7 +663,7 @@
         if (name.includes('باي')) return { icon: '🦾', bg: '#db2777', shadow: 'rgba(219, 39, 119, 0.35)' };
         if (name.includes('فخذ') || name.includes('أرجل')) return { icon: '🦵', bg: '#059669', shadow: 'rgba(5, 150, 105, 0.35)' };
         if (name.includes('سمانة')) return { icon: '⚡', bg: '#d97706', shadow: 'rgba(217, 119, 6, 0.35)' };
-        return { icon: '🏋️♂️', bg: '#4f46e5', shadow: 'rgba(79, 70, 229, 0.35)' };
+        return { icon: '🏋️‍♂️', bg: '#4f46e5', shadow: 'rgba(79, 70, 229, 0.35)' };
       };
 
       const sectionsHtml = groupsMap.map(g => {
@@ -735,6 +738,13 @@
           </div>
         `;
       }).join('');
+
+      // تفعيل وضع التعديل على الوجبات إذا كان وضع التعديل قيد التشغيل حالياً
+      if (isEditing) {
+        document.querySelectorAll('#supplementsList span, #supplementsList strong').forEach(el => {
+          el.contentEditable = "true";
+        });
+      }
     }
 
     function toggleEx(id, btn) {
@@ -878,11 +888,15 @@
           const c = waterCups.size;
           document.getElementById('waterLbl').textContent = `${c} / 8 أكواب (${(c*0.4).toFixed(1)} لتر)`;
         }
-        // استعادة أي تعديلات تم حفظها مسبقاً على النصوص
+        // استعادة التعديلات المحفوظة (بما فيها المكملات)
         const customEdits = JSON.parse(localStorage.getItem('custom_user_edits') || '{}');
         if (customEdits.coachAndUser) document.getElementById('coachAndUserText').innerHTML = customEdits.coachAndUser;
         if (customEdits.heroTitle) document.getElementById('heroUserTitle').innerHTML = customEdits.heroTitle;
         if (customEdits.heroDesc) document.getElementById('heroSystemDesc').innerHTML = customEdits.heroDesc;
+        if (customEdits.supplements) document.getElementById('supplementsList').innerHTML = customEdits.supplements;
+        if (customEdits.supplementsTitle && document.getElementById('supplementsTitle')) {
+          document.getElementById('supplementsTitle').innerHTML = customEdits.supplementsTitle;
+        }
       } catch(e) {}
     }
 
