@@ -7,9 +7,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
-  
-  <!-- مكتبة html2pdf لتصدير ملفات PDF بضغطة زر -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
     :root {
@@ -89,7 +86,6 @@
       padding: 4px 14px; border-radius: 20px;
     }
 
-    /* أزرار إضافة التمارين */
     .btn-add-mini {
       background: rgba(16, 185, 129, 0.12); border: 1px dashed var(--p);
       color: var(--p); padding: 5px 12px; border-radius: 10px; font-size: 12px;
@@ -117,14 +113,13 @@
     .ex-badge { position: absolute; bottom: 8px; right: 10px; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; color: #fff; }
     .ex-super { position: absolute; bottom: 8px; left: 10px; background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 900; }
     
-    /* زر حذف التمرين */
     .btn-del-ex {
       position: absolute; top: 10px; right: 10px; width: 30px; height: 30px;
       border-radius: 50%; background: rgba(239, 68, 68, 0.85); backdrop-filter: blur(4px);
       border: 1px solid rgba(255,255,255,0.2); color: #fff; display: grid; place-items: center;
       font-size: 13px; cursor: pointer; transition: .2s; z-index: 10;
     }
-    .btn-del-ex:hover { background: #dc2626; transform: scale(1.1); box-shadow: 0 2px 8px rgba(220,38,38,0.5); }
+    .btn-del-ex:hover { background: #dc2626; transform: scale(1.1); }
 
     .ex-body { padding: 16px; display: flex; flex-direction: column; flex-grow: 1; gap: 10px; }
     .specs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: rgba(0,0,0,0.15); padding: 8px 10px; border-radius: 10px; font-size: 12px; }
@@ -174,7 +169,7 @@
       padding: 1px 4px;
     }
 
-    /* Modal نافذة إضافة التمرين */
+    /* Modal إضافة تمرين */
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
       z-index: 10000; display: none; align-items: center; justify-content: center; padding: 15px;
@@ -208,12 +203,43 @@
       padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer;
     }
 
-    @media (max-width: 800px) { .metrics { grid-template-columns: repeat(2, 1fr); max-width: 100%; } .macro-box { grid-template-columns: 1fr; } .grid { grid-template-columns: 1fr; } }
+    /* حاوية الطباعة الخاصة بالخطة كاملة */
+    #printFullBookView {
+      display: none;
+    }
+
+    /* قواعد الطباعة وتصدير PDF الأصلي عالي الجودة */
     @media print {
-      body { background: #fff !important; color: #0f172a !important; }
-      header, .carousel, .d-tabs, .btn-done, .btn-timer, .timer-bar, .c-btn, .btn-meal, .toast-box, .ctrls, .btn-add-mini, .btn-add-main-day, .btn-del-ex { display: none !important; }
-      .hero, .box-card, .ex-card, .meal-card, .muscle-sec-header { background: #fff !important; border: 1px solid #cbd5e1 !important; box-shadow: none !important; break-inside: avoid; }
-      .spec-v, .m-val { color: #059669 !important; }
+      body {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        padding: 0 !important;
+      }
+      /* إخفاء واجهة الشاشة العادية أثناء الطباعة */
+      header, .main, .timer-bar, .toast-box, #addExModal {
+        display: none !important;
+      }
+      /* إظهار حاوية الكتاب الشامل بكامل الأيام والدايت */
+      #printFullBookView {
+        display: block !important;
+        padding: 10px 20px !important;
+      }
+      .print-day-block {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        margin-bottom: 25px !important;
+      }
+      .print-card {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        border: 1px solid #cbd5e1 !important;
+        background: #f8fafc !important;
+        color: #0f172a !important;
+      }
+      .page-break {
+        page-break-before: always !important;
+        break-before: page !important;
+      }
     }
   </style>
 </head>
@@ -246,17 +272,16 @@
         <button class="btn-action" id="btnEditToggle" onclick="toggleEditMode()" title="تعديل نصوص الصفحة">
           ✏️ <span id="btnEditText">تعديل الخطة</span>
         </button>
-        <button class="btn-action btn-pdf" onclick="exportToPDF()" title="تحميل ملف PDF للعميل">
-          📄 تصدير PDF
+        <button class="btn-action btn-pdf" onclick="exportToPDF()" title="تحميل الخطة كاملة أسبوع كامل مع التغذية">
+          📄 تصدير الخطة كاملة PDF
         </button>
         <button class="btn-i" onclick="toggleTheme()" title="الوضع">🌓</button>
-        <button class="btn-i" onclick="window.print()" title="طباعة">🖨️</button>
+        <button class="btn-i" onclick="exportToPDF()" title="طباعة">🖨️</button>
         <button class="btn-i" onclick="resetDay()" title="إعادة تعيين">🔄</button>
       </div>
     </div>
   </header>
 
-  <!-- الحاوية التي سيتم طباعتها وتصديرها كـ PDF -->
   <main class="main" id="printableArea">
     <section class="hero">
       <div class="hero-flex">
@@ -350,7 +375,10 @@
     </section>
   </main>
 
-  <!-- نافذة إضافة تمرين جديد مع دعم رفع الصور من الجهاز -->
+  <!-- الحاوية المخصصة لتوليد الكتاب الكامل (تظهر فقط عند الطباعة أو التصدير لـ PDF) -->
+  <div id="printFullBookView"></div>
+
+  <!-- نافذة إضافة تمرين جديد -->
   <div class="modal-overlay" id="addExModal">
     <div class="modal-content">
       <div class="modal-head">
@@ -385,14 +413,12 @@
           <input type="text" id="newExFocus" class="f-input" placeholder="مثال: نزول بطيء 2ث وعصر العضلة بالقمة">
         </div>
 
-        <!-- حقل رفع صورة من الجهاز أو إدخال رابط مع معاينة مباشرة -->
         <div class="f-group">
-          <label>صورة التمرين (اختر من هاتفك/جهازك أو ضع رابط)</label>
+          <label>صورة التمرين (اختر من هاتفك أو جهازك)</label>
           <input type="file" id="newExFile" accept="image/*" class="f-input" style="padding:6px; cursor:pointer;" onchange="previewSelectedImage(event)">
           <div style="font-size:11px; color:var(--muted); margin:4px 0;">أو يمكنك وضع رابط صورة خارجي:</div>
           <input type="url" id="newExImg" class="f-input" placeholder="https://example.com/image.jpg" oninput="previewUrlImage(this.value)">
           
-          <!-- صندوق المعاينة المباشرة للصورة -->
           <div id="imagePreviewContainer" style="display:none; margin-top:10px; text-align:center;">
             <span style="font-size:11px; color:var(--p); display:block; margin-bottom:4px;">معاينة الصورة المختارة:</span>
             <img id="imagePreview" src="" alt="معاينة" style="max-height:130px; width:auto; border-radius:10px; border:1px solid var(--border); object-fit:cover;">
@@ -650,26 +676,6 @@
       localStorage.setItem('custom_weekly_workouts_2026', JSON.stringify(weeklyWorkouts));
     }
 
-    function exportToPDF() {
-      if (isEditing) toggleEditMode();
-      showToast('جاري تجهيز ملف PDF للعميل...');
-
-      const element = document.getElementById('printableArea');
-      const opt = {
-        margin:       [10, 10, 10, 10],
-        filename:     'خطة_التدريب_والتغذية_2026.pdf',
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-
-      html2pdf().set(opt).from(element).save().then(() => {
-        showToast('تم تحميل ملف PDF بنجاح! 🎉');
-      }).catch(() => {
-        window.print();
-      });
-    }
-
     function switchTab(t) {
       curTab = t;
       document.getElementById('secWorkouts').style.display = t === 'workouts' ? 'block' : 'none';
@@ -714,7 +720,6 @@
       updateProg();
     }
 
-    /* دوال معالجة ومعاينة الصور المرفوعة */
     function previewSelectedImage(event) {
       const file = event.target.files[0];
       if (file) {
@@ -722,7 +727,7 @@
         const container = document.getElementById('imagePreviewContainer');
         preview.src = URL.createObjectURL(file);
         container.style.display = 'block';
-        document.getElementById('newExImg').value = ''; // تصفير الرابط في حال تم اختيار ملف
+        document.getElementById('newExImg').value = '';
       }
     }
 
@@ -737,7 +742,6 @@
       }
     }
 
-    // دالة ضغط وتصغير الصورة تلقائياً لكي لا تملأ ذاكرة التخزين
     function compressImageFile(file) {
       return new Promise((resolve) => {
         if (!file) return resolve(null);
@@ -759,8 +763,6 @@
             canvas.height = height;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
-            
-            // ضغط الصورة إلى JPEG بجودة 0.75
             resolve(canvas.toDataURL('image/jpeg', 0.75));
           };
           img.src = e.target.result;
@@ -804,13 +806,11 @@
         const urlInput = document.getElementById('newExImg');
         let finalImage = '';
 
-        // إذا اختار ملف من جهازه نقوم بضغطه وحفظه
         if (fileInput.files && fileInput.files[0]) {
           finalImage = await compressImageFile(fileInput.files[0]);
         } else if (urlInput.value.trim()) {
           finalImage = urlInput.value.trim();
         } else {
-          // صورة افتراضية عند عدم تحديد صورة
           finalImage = 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600';
         }
 
@@ -839,7 +839,7 @@
         updateProg();
         showToast(`تمت إضافة "${title}" مع الصورة بنجاح! 💪`);
       } catch (err) {
-        showToast('حدث خطأ أثناء حفظ الصورة، تأكد من مساحة المتصفح');
+        showToast('حدث خطأ أثناء حفظ الصورة');
       } finally {
         btn.textContent = '✓ حفظ وإضافة التمرين';
         btn.disabled = false;
@@ -881,7 +881,6 @@
               <div class="pillar"><h4 style="color:var(--blue);margin-bottom:4px">💧 ترطيب مستمر 3.5 لتر</h4><p style="font-size:12px;color:var(--muted)">تجديد المفاصل وطرد السموم والفضلات.</p></div>
               <div class="pillar"><h4 style="color:var(--blue);margin-bottom:4px">🥗 تغذية صيانة متوازنة</h4><p style="font-size:12px;color:var(--muted)">تغذية نظيفة لإعادة ملء مخازن الطاقة.</p></div>
             </div>
-            <button class="nav-btn diet" style="margin-top:24px;display:inline-block" onclick="switchTab('diet');pickDiet('${k}')">🥗 عرض دايت ${daysConfig.find(d=>d.k===k).name}</button>
           </div>
         `;
         return;
@@ -953,7 +952,7 @@
               </div>
               <div class="msh-right">
                 <button class="btn-add-mini" onclick="openAddExModal('${g.name}')" title="إضافة تمرين إلى هذه المجموعة">+ إضافة تمرين</button>
-                <span class="msh-count">${g.items.length} ${g.items.length === 1 ? 'تمرين' : (g.items.length === 2 ? 'تمرينان' : 'تمارين')}</span>
+                <span class="msh-count">${g.items.length} تمارين</span>
               </div>
             </div>
             <div class="grid">
@@ -1194,6 +1193,137 @@
         renderWk(curWk); renderDt(curDiet); updateProg();
         showToast('تمت إعادة التعيين بنجاح 🔄');
       }
+    }
+
+    /* بناء وتجميع كامل الخطة (كل الأيام والدايت) للطباعة والـ PDF بدون أي بياض وبأعلى دقة */
+    function buildPrintFullBook() {
+      const container = document.getElementById('printFullBookView');
+      container.innerHTML = '';
+
+      // 1. غلاف المشترك
+      const heroClone = document.querySelector('.hero').cloneNode(true);
+      const progStrip = heroClone.querySelector('.prog-strip');
+      if (progStrip) progStrip.remove();
+      heroClone.style.cssText = 'background:#f8fafc; color:#0f172a; border:2px solid #059669; border-radius:14px; padding:20px; margin-bottom:25px;';
+      container.appendChild(heroClone);
+
+      // 2. جميع أيام التمرين
+      const wkHead = document.createElement('h2');
+      wkHead.style.cssText = 'font-size:20px; color:#059669; margin:20px 0 15px; border-bottom:2px solid #059669; padding-bottom:6px;';
+      wkHead.textContent = '🏋️‍♂️ جدول التدريب الأسبوعي الشامل (جميع الأيام والتمارين)';
+      container.appendChild(wkHead);
+
+      daysConfig.forEach((day) => {
+        const dData = weeklyWorkouts[day.k];
+        if (!dData) return;
+
+        const dayWrapper = document.createElement('div');
+        dayWrapper.className = 'print-day-block';
+
+        if (dData.rest) {
+          dayWrapper.innerHTML = `
+            <div style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:10px; padding:15px; text-align:center; margin-bottom:15px;">
+              <h3 style="color:#0284c7; font-size:16px;">🌿 ${day.name}: ${dData.title}</h3>
+              <p style="color:#475569; font-size:12px; margin-top:4px;">${dData.lead}</p>
+            </div>
+          `;
+        } else {
+          let exercisesCards = '';
+          (dData.exercises || []).forEach((ex, idx) => {
+            exercisesCards += `
+              <div class="print-card" style="border-radius:10px; overflow:hidden; display:flex; flex-direction:column;">
+                <div style="height:125px; background:#000; position:relative;">
+                  <img src="${ex.img}" style="width:100%; height:100%; object-fit:cover;">
+                  <span style="position:absolute; bottom:5px; right:6px; background:rgba(0,0,0,0.8); color:#fff; font-size:9.5px; padding:2px 6px; border-radius:6px;">${ex.m}</span>
+                  <span style="position:absolute; top:6px; left:6px; background:#059669; color:#fff; width:20px; height:20px; border-radius:50%; display:grid; place-items:center; font-size:10px; font-weight:800;">${idx+1}</span>
+                </div>
+                <div style="padding:10px; display:flex; flex-direction:column; gap:4px;">
+                  <h4 style="font-size:13px; font-weight:800; color:#0f172a;">${ex.title}</h4>
+                  <div style="font-size:11px; color:#334155; background:#e2e8f0; padding:4px 6px; border-radius:6px;">
+                    <div>المجموعات: <b>${ex.s}</b> | التكرارات: <b>${ex.r}</b></div>
+                    <div>التركيز: <b>${ex.f}</b></div>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+
+          dayWrapper.innerHTML = `
+            <div style="background:#e2e8f0; border-right:4px solid #059669; padding:6px 12px; border-radius:8px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+              <h3 style="font-size:15px; font-weight:900; color:#0f172a;">⚡ ${day.name} - ${dData.title}</h3>
+              <span style="font-size:11px; color:#059669; font-weight:700;">${dData.time || ''}</span>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:20px;">
+              ${exercisesCards}
+            </div>
+          `;
+        }
+        container.appendChild(dayWrapper);
+      });
+
+      // 3. جدول الدايت والتغذية
+      const dietHead = document.createElement('h2');
+      dietHead.className = 'page-break';
+      dietHead.style.cssText = 'font-size:20px; color:#d97706; margin:25px 0 15px; border-bottom:2px solid #d97706; padding-bottom:6px;';
+      dietHead.textContent = '🥗 الخطة الغذائية اليومية المتكاملة (جميع الأيام والوجبات)';
+      container.appendChild(dietHead);
+
+      daysConfig.forEach((day) => {
+        const dt = weeklyDiet[day.k];
+        if (!dt) return;
+
+        const dietWrapper = document.createElement('div');
+        dietWrapper.className = 'print-day-block';
+
+        let mealsHtml = '';
+        (dt.meals || []).forEach(m => {
+          mealsHtml += `
+            <div class="print-card" style="border-radius:8px; padding:10px;">
+              <div style="display:flex; justify-content:space-between; border-bottom:1px solid #cbd5e1; padding-bottom:4px; margin-bottom:4px;">
+                <b style="font-size:12px; color:#0f172a;">${m.icon} ${m.name}</b>
+                <span style="font-size:10.5px; color:#d97706; font-weight:800;">🔥 ${m.cal} kcal</span>
+              </div>
+              <ul style="list-style:none; font-size:11px; color:#334155;">
+                ${m.items.map(it => `<li>• ${it}</li>`).join('')}
+              </ul>
+            </div>
+          `;
+        });
+
+        dietWrapper.innerHTML = `
+          <div style="background:#fef3c7; border:1px solid #fde68a; padding:6px 12px; border-radius:8px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+            <b style="font-size:13.5px; color:#92400e;">${day.name}: ${dt.title} (${dt.cal} kcal)</b>
+            <span style="font-size:11px; color:#78350f;">بروتين: ${dt.p} | كارب: ${dt.c} | دهون: ${dt.f}</span>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:8px; margin-bottom:18px;">
+            ${mealsHtml}
+          </div>
+        `;
+        container.appendChild(dietWrapper);
+      });
+
+      // 4. المكملات والتعليمات
+      const suppBlock = document.createElement('div');
+      suppBlock.className = 'print-day-block';
+      suppBlock.innerHTML = `
+        <div style="border:1px solid #cbd5e1; background:#f8fafc; border-radius:10px; padding:15px; margin-top:20px;">
+          <h3 style="font-size:15px; color:#7c3aed; margin-bottom:8px;">💊 المكملات الغذائية اليومية المقررة</h3>
+          ${document.getElementById('supplementsList').outerHTML}
+        </div>
+      `;
+      container.appendChild(suppBlock);
+    }
+
+    /* دالة التصدير إلى PDF التي تستدعي محرك المتصفح المباشر */
+    function exportToPDF() {
+      if (isEditing) toggleEditMode();
+      showToast('جاري تحضير ملف PDF... اختر حفظ بتنسيق PDF من نافذة المتصفح 📄');
+      
+      buildPrintFullBook();
+
+      setTimeout(() => {
+        window.print();
+      }, 350);
     }
   </script>
 </body>
