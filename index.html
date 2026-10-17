@@ -89,7 +89,7 @@
       padding: 4px 14px; border-radius: 20px;
     }
 
-    /* أزرار إضافة التمارين الاحترافية */
+    /* أزرار إضافة التمارين */
     .btn-add-mini {
       background: rgba(16, 185, 129, 0.12); border: 1px dashed var(--p);
       color: var(--p); padding: 5px 12px; border-radius: 10px; font-size: 12px;
@@ -166,7 +166,6 @@
     .toast-box { position: fixed; top: 65px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
     .toast { background: rgba(15,23,42,0.95); border: 1px solid var(--p); color: #fff; padding: 8px 18px; border-radius: 20px; font-size: 12.5px; font-weight: 700; box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
 
-    /* تمييز العناصر أثناء وضع التعديل المباشر */
     body.is-editing [contenteditable="true"] {
       outline: 2px dashed var(--gold) !important;
       background: rgba(245, 158, 11, 0.08) !important;
@@ -175,7 +174,7 @@
       padding: 1px 4px;
     }
 
-    /* Modal نافذة إضافة التمرين الاحترافية */
+    /* Modal نافذة إضافة التمرين */
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
       z-index: 10000; display: none; align-items: center; justify-content: center; padding: 15px;
@@ -183,7 +182,7 @@
     .modal-overlay.active { display: flex; }
     .modal-content {
       background: var(--card); border: 1px solid var(--border); border-radius: 20px;
-      max-width: 520px; width: 100%; padding: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+      max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.6);
       animation: modalFadeIn 0.25s ease;
     }
     @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
@@ -193,12 +192,12 @@
     .modal-close:hover { color: #fff; }
     .f-group { margin-bottom: 14px; text-align: right; }
     .f-group label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
-    .f-input, .f-select {
+    .f-input {
       width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--border);
       color: var(--txt); padding: 9px 12px; border-radius: 10px; font-family: 'Cairo';
       font-size: 13px; outline: none; transition: .2s;
     }
-    .f-input:focus, .f-select:focus { border-color: var(--p); }
+    .f-input:focus { border-color: var(--p); }
     .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
     .btn-submit-ex {
       flex: 1; background: var(--p-grad); color: #fff; border: none; padding: 10px;
@@ -330,7 +329,6 @@
           <p style="font-size:11.5px;color:var(--muted)">الهدف: 3.5 لتر يومياً (كل كوب يعادل ~400 مل)</p>
         </div>
 
-        <!-- بطاقة المكملات اليومية (قابلة للتعديل والحفظ) -->
         <div class="box-card">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
             <div class="msh-icon-box" style="width:32px;height:32px;border-radius:8px;background:#7c3aed;box-shadow:0 3px 8px rgba(124,58,237,0.3);font-size:17px">💊</div>
@@ -352,7 +350,7 @@
     </section>
   </main>
 
-  <!-- نافذة إضافة تمرين جديد الاحترافية (Modal) -->
+  <!-- نافذة إضافة تمرين جديد مع دعم رفع الصور من الجهاز -->
   <div class="modal-overlay" id="addExModal">
     <div class="modal-content">
       <div class="modal-head">
@@ -386,12 +384,23 @@
           <label>التركيز والأداء</label>
           <input type="text" id="newExFocus" class="f-input" placeholder="مثال: نزول بطيء 2ث وعصر العضلة بالقمة">
         </div>
+
+        <!-- حقل رفع صورة من الجهاز أو إدخال رابط مع معاينة مباشرة -->
         <div class="f-group">
-          <label>رابط صورة التمرين (اختياري)</label>
-          <input type="url" id="newExImg" class="f-input" placeholder="اتركه فارغاً للصورة التلقائية">
+          <label>صورة التمرين (اختر من هاتفك/جهازك أو ضع رابط)</label>
+          <input type="file" id="newExFile" accept="image/*" class="f-input" style="padding:6px; cursor:pointer;" onchange="previewSelectedImage(event)">
+          <div style="font-size:11px; color:var(--muted); margin:4px 0;">أو يمكنك وضع رابط صورة خارجي:</div>
+          <input type="url" id="newExImg" class="f-input" placeholder="https://example.com/image.jpg" oninput="previewUrlImage(this.value)">
+          
+          <!-- صندوق المعاينة المباشرة للصورة -->
+          <div id="imagePreviewContainer" style="display:none; margin-top:10px; text-align:center;">
+            <span style="font-size:11px; color:var(--p); display:block; margin-bottom:4px;">معاينة الصورة المختارة:</span>
+            <img id="imagePreview" src="" alt="معاينة" style="max-height:130px; width:auto; border-radius:10px; border:1px solid var(--border); object-fit:cover;">
+          </div>
         </div>
+
         <div class="modal-btns">
-          <button type="submit" class="btn-submit-ex">✓ حفظ وإضافة التمرين</button>
+          <button type="submit" class="btn-submit-ex" id="btnSubmitEx">✓ حفظ وإضافة التمرين</button>
           <button type="button" class="btn-cancel-modal" onclick="closeAddExModal()">إلغاء</button>
         </div>
       </form>
@@ -409,7 +418,6 @@
       { k: 'fri', name: 'الجمعة', target: 'OFF (راحة) 🌿', rest: true, badge: 'يوم 7' }
     ];
 
-    // البيانات الأصلية للتمارين
     const defaultWorkouts = {
       sat: {
         title: 'تمارين السبت: Push (دفع كامل)',
@@ -491,7 +499,6 @@
       }
     };
 
-    // تحميل التمارين المحفوظة أو الافتراضية
     let weeklyWorkouts = JSON.parse(localStorage.getItem('custom_weekly_workouts_2026')) || defaultWorkouts;
 
     const weeklyDiet = {
@@ -605,7 +612,6 @@
       setTimeout(() => t.remove(), 2600);
     }
 
-    /* ميزة وضع التعديل المباشر */
     function toggleEditMode() {
       isEditing = !isEditing;
       document.body.classList.toggle('is-editing', isEditing);
@@ -646,7 +652,6 @@
 
     function exportToPDF() {
       if (isEditing) toggleEditMode();
-
       showToast('جاري تجهيز ملف PDF للعميل...');
 
       const element = document.getElementById('printableArea');
@@ -709,14 +714,71 @@
       updateProg();
     }
 
-    /* دوال إضافة وحذف التمارين الاحترافية */
+    /* دوال معالجة ومعاينة الصور المرفوعة */
+    function previewSelectedImage(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const preview = document.getElementById('imagePreview');
+        const container = document.getElementById('imagePreviewContainer');
+        preview.src = URL.createObjectURL(file);
+        container.style.display = 'block';
+        document.getElementById('newExImg').value = ''; // تصفير الرابط في حال تم اختيار ملف
+      }
+    }
+
+    function previewUrlImage(url) {
+      const container = document.getElementById('imagePreviewContainer');
+      const preview = document.getElementById('imagePreview');
+      if (url.trim()) {
+        preview.src = url.trim();
+        container.style.display = 'block';
+      } else {
+        container.style.display = 'none';
+      }
+    }
+
+    // دالة ضغط وتصغير الصورة تلقائياً لكي لا تملأ ذاكرة التخزين
+    function compressImageFile(file) {
+      return new Promise((resolve) => {
+        if (!file) return resolve(null);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 650;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > MAX_WIDTH) {
+              height = Math.round((height * MAX_WIDTH) / width);
+              width = MAX_WIDTH;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // ضغط الصورة إلى JPEG بجودة 0.75
+            resolve(canvas.toDataURL('image/jpeg', 0.75));
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
     function openAddExModal(groupName = '') {
       targetGroupForModal = groupName;
       document.getElementById('newExGroup').value = groupName || 'تمارين أساسية إضافية';
       document.getElementById('newExTitle').value = '';
       document.getElementById('newExMuscle').value = '';
       document.getElementById('newExFocus').value = '';
+      document.getElementById('newExFile').value = '';
       document.getElementById('newExImg').value = '';
+      document.getElementById('imagePreviewContainer').style.display = 'none';
+      document.getElementById('imagePreview').src = '';
       document.getElementById('addExModal').classList.add('active');
     }
 
@@ -724,44 +786,64 @@
       document.getElementById('addExModal').classList.remove('active');
     }
 
-    function submitNewExercise(e) {
+    async function submitNewExercise(e) {
       e.preventDefault();
-      const title = document.getElementById('newExTitle').value.trim();
-      const group = document.getElementById('newExGroup').value.trim() || 'تمارين متنوعة';
-      const m = document.getElementById('newExMuscle').value.trim() || group;
-      const s = document.getElementById('newExSets').value.trim() || '3 مجموعات';
-      const r = document.getElementById('newExReps').value.trim() || '8 - 12 عدة';
-      const f = document.getElementById('newExFocus').value.trim() || 'أداء محكوم مع استطالة كاملة';
-      let img = document.getElementById('newExImg').value.trim();
+      const btn = document.getElementById('btnSubmitEx');
+      btn.textContent = '⏳ جاري الحفظ...';
+      btn.disabled = true;
 
-      if (!img) {
-        img = 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600';
+      try {
+        const title = document.getElementById('newExTitle').value.trim();
+        const group = document.getElementById('newExGroup').value.trim() || 'تمارين متنوعة';
+        const m = document.getElementById('newExMuscle').value.trim() || group;
+        const s = document.getElementById('newExSets').value.trim() || '3 مجموعات';
+        const r = document.getElementById('newExReps').value.trim() || '8 - 12 عدة';
+        const f = document.getElementById('newExFocus').value.trim() || 'أداء محكوم مع استطالة كاملة';
+        
+        const fileInput = document.getElementById('newExFile');
+        const urlInput = document.getElementById('newExImg');
+        let finalImage = '';
+
+        // إذا اختار ملف من جهازه نقوم بضغطه وحفظه
+        if (fileInput.files && fileInput.files[0]) {
+          finalImage = await compressImageFile(fileInput.files[0]);
+        } else if (urlInput.value.trim()) {
+          finalImage = urlInput.value.trim();
+        } else {
+          // صورة افتراضية عند عدم تحديد صورة
+          finalImage = 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600';
+        }
+
+        if (!weeklyWorkouts[curWk].exercises) {
+          weeklyWorkouts[curWk].exercises = [];
+        }
+
+        const newEx = {
+          id: `custom-${Date.now()}`,
+          group: group,
+          title: title,
+          sub: `استهداف عضلات ${m} بتركيز فائق`,
+          m: m,
+          s: s,
+          r: r,
+          t: 120,
+          f: f,
+          img: finalImage
+        };
+
+        weeklyWorkouts[curWk].exercises.push(newEx);
+        localStorage.setItem('custom_weekly_workouts_2026', JSON.stringify(weeklyWorkouts));
+        
+        closeAddExModal();
+        renderWk(curWk);
+        updateProg();
+        showToast(`تمت إضافة "${title}" مع الصورة بنجاح! 💪`);
+      } catch (err) {
+        showToast('حدث خطأ أثناء حفظ الصورة، تأكد من مساحة المتصفح');
+      } finally {
+        btn.textContent = '✓ حفظ وإضافة التمرين';
+        btn.disabled = false;
       }
-
-      if (!weeklyWorkouts[curWk].exercises) {
-        weeklyWorkouts[curWk].exercises = [];
-      }
-
-      const newEx = {
-        id: `custom-${Date.now()}`,
-        group: group,
-        title: title,
-        sub: `استهداف عضلات ${m} بتركيز فائق`,
-        m: m,
-        s: s,
-        r: r,
-        t: 120,
-        f: f,
-        img: img
-      };
-
-      weeklyWorkouts[curWk].exercises.push(newEx);
-      localStorage.setItem('custom_weekly_workouts_2026', JSON.stringify(weeklyWorkouts));
-      
-      closeAddExModal();
-      renderWk(curWk);
-      updateProg();
-      showToast(`تمت إضافة "${title}" بنجاح! 💪`);
     }
 
     function deleteExercise(exId) {
