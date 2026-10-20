@@ -169,6 +169,14 @@
       padding: 1px 4px;
     }
 
+    /* تحسين إمكانية التعديل على شريط الأيام */
+    body.is-editing .chip-name,
+    body.is-editing .chip-num,
+    body.is-editing .chip-target {
+      display: inline-block;
+      min-width: 25px;
+    }
+
     /* Modal إضافة تمرين */
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
@@ -434,7 +442,7 @@
   </div>
 
   <script>
-    const daysConfig = [
+    const defaultDaysConfig = [
       { k: 'sat', name: 'السبت', target: 'Push (دفع)', rest: false, badge: 'يوم 1' },
       { k: 'sun', name: 'الأحد', target: 'Pull (سحب)', rest: false, badge: 'يوم 2' },
       { k: 'mon', name: 'الإثنين', target: 'Leg (أرجل)', rest: false, badge: 'يوم 3' },
@@ -443,6 +451,8 @@
       { k: 'thu', name: 'الخميس', target: 'Arnold (Full Arms)', rest: false, badge: 'يوم 6' },
       { k: 'fri', name: 'الجمعة', target: 'OFF (راحة) 🌿', rest: true, badge: 'يوم 7' }
     ];
+
+    let daysConfig = JSON.parse(localStorage.getItem('custom_days_config_2026')) || defaultDaysConfig;
 
     const defaultWorkouts = {
       sat: {
@@ -645,7 +655,7 @@
       const txt = document.getElementById('btnEditText');
 
       const editableElements = document.querySelectorAll(
-        '#coachAndUserText, #heroUserTitle, #heroSystemDesc, .m-pill div, .specs div, h4, p, .meal-ul li, .m-val, #coachTip, #supplementsList span, #supplementsList strong'
+        '#coachAndUserText, #heroUserTitle, #heroSystemDesc, .m-pill div, .specs div, h4, p, .meal-ul li, .m-val, #coachTip, #supplementsList span, #supplementsList strong, .chip-name, .chip-num, .chip-target, .d-btn'
       );
 
       editableElements.forEach(el => {
@@ -655,7 +665,7 @@
       if (isEditing) {
         btn.classList.add('editing');
         txt.textContent = '💾 حفظ التعديلات';
-        showToast('تم تفعيل وضع التعديل! يمكنك تعديل أي نص أو إضافة وحذف تمارين');
+        showToast('تم تفعيل وضع التعديل! يمكنك تعديل أي نص أو أشرطة الأيام وحذف/إضافة تمارين');
       } else {
         btn.classList.remove('editing');
         txt.textContent = '✏️ تعديل الخطة';
@@ -665,6 +675,20 @@
     }
 
     function saveCustomEdits() {
+      // حفظ تعديلات شريط الأيام (Carousel)
+      const chips = document.querySelectorAll('#wkCarousel .chip');
+      chips.forEach((chipEl, idx) => {
+        if (daysConfig[idx]) {
+          const nameEl = chipEl.querySelector('.chip-name');
+          const numEl = chipEl.querySelector('.chip-num');
+          const targetEl = chipEl.querySelector('.chip-target');
+          if (nameEl) daysConfig[idx].name = nameEl.innerText.trim();
+          if (numEl) daysConfig[idx].badge = numEl.innerText.trim();
+          if (targetEl) daysConfig[idx].target = targetEl.innerText.trim();
+        }
+      });
+      localStorage.setItem('custom_days_config_2026', JSON.stringify(daysConfig));
+
       const edits = {
         coachAndUser: document.getElementById('coachAndUserText').innerHTML,
         heroTitle: document.getElementById('heroUserTitle').innerHTML,
@@ -674,6 +698,7 @@
       };
       localStorage.setItem('custom_user_edits', JSON.stringify(edits));
       localStorage.setItem('custom_weekly_workouts_2026', JSON.stringify(weeklyWorkouts));
+      initDietTabs();
     }
 
     function switchTab(t) {
@@ -689,8 +714,11 @@
       const c = document.getElementById('wkCarousel');
       c.innerHTML = daysConfig.map(d => `
         <div class="chip ${d.k === curWk ? 'active' : ''} ${d.rest ? 'rest' : ''}" onclick="pickWk('${d.k}', this)">
-          <div style="display:flex;justify-content:space-between;align-items:center"><span class="chip-name">${d.name}</span><span class="chip-num">${d.badge}</span></div>
-          <div class="chip-target">${d.target}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span class="chip-name" onclick="if(isEditing) event.stopPropagation();">${d.name}</span>
+            <span class="chip-num" onclick="if(isEditing) event.stopPropagation();">${d.badge}</span>
+          </div>
+          <div class="chip-target" onclick="if(isEditing) event.stopPropagation();">${d.target}</div>
         </div>
       `).join('');
     }
